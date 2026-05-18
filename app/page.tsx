@@ -31,34 +31,34 @@ const slots = ['09:00', '10:00', '11:00', '12:00', '01:00', '02:00']
 
 export default function Home() {
   return (
-    <main className="min-h-screen font-arabic text-wayyak-deep">
-      <section className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-        <nav className="sticky top-3 z-20 flex items-center justify-between rounded-[1.75rem] border border-white/70 bg-white/90 px-3 py-3 shadow-soft backdrop-blur md:px-5">
-          <div className="flex items-center gap-3">
+    <main className="min-h-screen w-full max-w-full overflow-x-hidden font-arabic text-wayyak-deep">
+      <section className="mx-auto w-full max-w-7xl overflow-hidden px-4 pb-10 pt-4 sm:px-6 lg:px-8">
+        <nav className="sticky top-3 z-20 flex items-center justify-between rounded-[1.4rem] border border-white/70 bg-white/95 px-3 py-3 shadow-soft backdrop-blur md:rounded-[1.75rem] md:px-5">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Logo />
-            <div className="leading-tight">
-              <p className="text-xl font-black tracking-tight text-wayyak-green">وياك</p>
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-lg font-black tracking-tight text-wayyak-green sm:text-xl">وياك</p>
               <p className="font-english text-[11px] font-bold uppercase tracking-[0.22em] text-wayyak-deep/50">WAYYAK</p>
             </div>
           </div>
-          <div className="hidden rounded-full bg-wayyak-sand p-1 text-sm font-black text-wayyak-green sm:flex" dir="ltr">
-            <span className="rounded-full bg-white px-4 py-2 shadow-sm">AR</span>
+          <div className="hidden rounded-full border border-wayyak-green/10 bg-wayyak-sand p-1 text-sm font-black text-wayyak-green sm:flex" dir="ltr">
+            <span className="rounded-full bg-wayyak-green px-4 py-2 text-white shadow-sm">AR</span>
             <span className="px-4 py-2 text-wayyak-green/45">EN</span>
           </div>
-          <a href="#spaces" className="rounded-full bg-wayyak-green px-4 py-3 text-sm font-black text-white shadow-lg shadow-wayyak-green/20 md:px-6">استكشف</a>
+          <a href="#spaces" className="shrink-0 rounded-full bg-wayyak-green px-4 py-3 text-sm font-black text-white shadow-lg shadow-wayyak-green/20 md:px-6">استكشف</a>
         </nav>
 
-        <div className="grid items-center gap-10 py-10 lg:grid-cols-[1.02fr_.98fr] lg:py-16">
-          <div className="text-center lg:text-right">
+        <div className="grid min-w-0 items-center gap-7 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,.85fr)] lg:gap-10 lg:py-14">
+          <div className="min-w-0 text-center lg:text-right">
             <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-wayyak-green/10 bg-white px-3 py-2 text-xs font-black text-wayyak-green shadow-sm lg:mx-0">
               <span className="h-2 w-2 rounded-full bg-wayyak-gold" />
               حجز مساحات بالساعة · تجربة KSU
             </div>
-            <h1 className="mx-auto max-w-4xl text-4xl font-black leading-[1.08] tracking-tight text-wayyak-deep sm:text-6xl lg:mx-0 lg:text-7xl">
+            <h1 className="mx-auto max-w-4xl text-[2.45rem] font-black leading-[1.12] tracking-tight text-wayyak-deep sm:text-6xl lg:mx-0 lg:text-6xl xl:text-7xl">
               منصة سعودية لحجز المساحات غير المستغلة
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-wayyak-deep/70 lg:mx-0">
-              وياك يربط أصحاب المساحات بالباحثين عن مكاتب، قاعات اجتماعات، استوديوهات ومواقع فعاليات — بتجربة بسيطة شبيهة Airbnb وPeerspace.
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-wayyak-deep/70 sm:text-lg lg:mx-0">
+              وياك يربط أصحاب المساحات بالباحثين عن مكاتب، قاعات اجتماعات، استوديوهات ومواقع فعاليات — بتجربة بسيطة شبيهة <bdi dir="ltr">Airbnb</bdi> و <bdi dir="ltr">Peerspace</bdi>.
             </p>
 
             <div className="mx-auto mt-7 flex max-w-xl flex-col gap-3 rounded-[2rem] border border-wayyak-green/10 bg-white p-3 shadow-card lg:mx-0" dir="rtl">
@@ -67,21 +67,21 @@ export default function Home() {
                   <p className="text-xs font-bold text-wayyak-deep/45">أين تبحث؟</p>
                   <p className="mt-1 font-black text-wayyak-deep">جامعة الملك سعود، الرياض</p>
                 </div>
-                <button className="rounded-2xl bg-wayyak-gold px-7 py-4 font-black text-wayyak-deep transition hover:scale-[1.01]">ابحث الآن</button>
+                <a href="#spaces" className="rounded-2xl bg-wayyak-gold px-7 py-4 text-center font-black text-wayyak-deep transition hover:scale-[1.01]">ابحث الآن</a>
               </div>
             </div>
 
-            <div className="mt-7 flex flex-wrap justify-center gap-2 lg:justify-start">
+            <div className="no-scrollbar -mx-4 mt-7 flex max-w-full gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 lg:justify-start">
               {categories.map(([ar, en]) => (
-                <span key={en} className="rounded-full border border-wayyak-green/10 bg-white px-4 py-2 text-sm font-black text-wayyak-green shadow-sm">
-                  {ar} <span className="font-english text-wayyak-deep/35" dir="ltr">/ {en}</span>
+                <span key={en} className="shrink-0 rounded-full border border-wayyak-green/10 bg-white px-4 py-2 text-sm font-black text-wayyak-green shadow-sm">
+                  {ar} <bdi className="font-english text-wayyak-deep/35" dir="ltr">/ {en}</bdi>
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[27rem] lg:max-w-none">
-            <div className="absolute -left-4 top-10 hidden h-28 w-28 rounded-full bg-wayyak-gold/30 blur-2xl md:block" />
+          <div className="relative mx-auto w-full max-w-[27rem] min-w-0 lg:max-w-[30rem]">
+            <div className="absolute left-0 top-10 hidden h-28 w-28 rounded-full bg-wayyak-gold/30 blur-2xl md:block" />
             <div className="rounded-[2.2rem] border border-white bg-white p-3 shadow-soft">
               <div className="overflow-hidden rounded-[1.8rem] bg-wayyak-deep text-white">
                 <div className="bg-gradient-to-br from-wayyak-green via-[#237747] to-wayyak-deep p-5">
@@ -124,7 +124,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="spaces" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <section id="spaces" className="mx-auto w-full max-w-7xl overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <p className="font-english text-xs font-black uppercase tracking-[0.24em] text-wayyak-gold" dir="ltr">KSU seed data</p>
@@ -159,7 +159,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-7xl overflow-hidden px-4 pb-14 sm:px-6 lg:px-8">
         <div className="grid gap-5 rounded-[2rem] bg-wayyak-deep p-5 text-white shadow-soft md:grid-cols-[.9fr_1.1fr] md:p-8">
           <div>
             <p className="font-english text-xs font-black uppercase tracking-[0.24em] text-wayyak-gold" dir="ltr">Phase 1 database</p>
