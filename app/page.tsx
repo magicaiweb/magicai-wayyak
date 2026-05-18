@@ -71,7 +71,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="no-scrollbar -mx-4 mt-7 flex max-w-full gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 lg:justify-start">
+            <div className="mt-7 flex max-w-full flex-wrap justify-center gap-2 overflow-visible pb-2 lg:justify-start">
               {categories.map(([ar, en]) => (
                 <span key={en} className="shrink-0 rounded-full border border-wayyak-green/10 bg-white px-4 py-2 text-sm font-black text-wayyak-green shadow-sm">
                   {ar} <bdi className="font-english text-wayyak-deep/35" dir="ltr">/ {en}</bdi>
