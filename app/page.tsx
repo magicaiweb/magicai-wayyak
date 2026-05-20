@@ -61,9 +61,10 @@ const formatSar = (halalas: number) => `${(halalas / 100).toLocaleString('en-US'
 const statusLabel: Record<SpaceStatus, string> = { draft: 'مسودة', pending: 'بانتظار الموافقة', approved: 'معتمد', rejected: 'مرفوض' }
 
 async function readJson(response: Response) {
+  const staticPreviewError = 'خدمة OTP تحتاج backend runtime. المعاينة الحالية static فقط.'
   const text = await response.text()
-  if (!text) return {}
-  try { return JSON.parse(text) } catch { return { error: 'خدمة OTP تحتاج backend runtime. المعاينة الحالية static فقط.' } }
+  if (!text) return response.ok ? {} : { error: staticPreviewError }
+  try { return JSON.parse(text) } catch { return { error: staticPreviewError } }
 }
 
 const Logo = () => <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="h-11 w-11 shrink-0" aria-label="WAYYAK logo"><rect x="10" y="18" width="80" height="64" rx="18" fill="#1B6B3A" /><path d="M29 36h42M29 51h42M29 66h24" stroke="#fff" strokeWidth="7" strokeLinecap="round" /><circle cx="72" cy="66" r="7" fill="#F5A623" /></svg>

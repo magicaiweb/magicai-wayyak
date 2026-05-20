@@ -52,9 +52,10 @@ const paymentLabel: Record<PaymentStatus, string> = { paid: 'Paid', manual_pendi
 const bookingLabel: Record<BookingStatus, string> = { new: 'New', confirmed: 'Confirmed', checked_in: 'Checked in', completed: 'Completed', cancelled: 'Cancelled' }
 
 async function readJson(response: Response) {
+  const staticPreviewError = 'OTP service needs backend runtime. This SFTP preview is static only.'
   const text = await response.text()
-  if (!text) return {}
-  try { return JSON.parse(text) } catch { return { error: 'OTP service needs backend runtime. This SFTP preview is static only.' } }
+  if (!text) return response.ok ? {} : { error: staticPreviewError }
+  try { return JSON.parse(text) } catch { return { error: staticPreviewError } }
 }
 
 export default function AdminPortal() {
