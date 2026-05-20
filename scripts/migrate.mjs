@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import pg from 'pg'
@@ -13,14 +13,18 @@ if (!databaseUrl) {
   process.exit(1)
 }
 
-const migrationPath = path.join(__dirname, '..', 'db', 'migrations', '001_phase1_schema.sql')
-const sql = await readFile(migrationPath, 'utf8')
+const migrationsDir = path.join(__dirname, '..', 'db', 'migrations')
+const files = (await readdir(migrationsDir)).filter((file) => file.endsWith('.sql')).sort()
 const client = new Client({ connectionString: databaseUrl })
 
 try {
   await client.connect()
-  await client.query(sql)
-  console.log('WAYYAK Phase 1 schema migrated successfully')
+  for (const file of files) {
+    const sql = await readFile(path.join(migrationsDir, file), 'utf8')
+    await client.query(sql)
+    console.log(`Applied ${file}`)
+  }
+  console.log('WAYYAK migrations completed successfully')
 } finally {
   await client.end()
 }

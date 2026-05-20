@@ -9,17 +9,20 @@
     "lint": "next lint",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed-ksu.mjs",
-    "db:phase1": "npm run db:migrate && npm run db:seed"
+    "db:phase1": "npm run db:migrate && npm run db:seed",
+    "auth:api": "node server/email-otp-api.mjs"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
     "next": "14.2.35",
+    "nodemailer": "^8.0.7",
     "pg": "^8.21.0",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",

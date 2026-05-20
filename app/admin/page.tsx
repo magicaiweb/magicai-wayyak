@@ -32,8 +32,7 @@ const roles: { id: PortalRole; label: string; note: string }[] = [
   { id: 'ksu_admin', label: 'KSU Admin', note: 'Campus-level approvals' },
 ]
 
-const MOCK_OTP = '123456'
-const phonePattern = /^\+9665\d{8}$/
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i
 const ksuEmailPattern = /^[^\s@]+@ksu\.edu\.sa$/i
 
 const initialSpaces = [
@@ -54,11 +53,10 @@ const bookingLabel: Record<BookingStatus, string> = { new: 'New', confirmed: 'Co
 
 export default function AdminPortal() {
   const [role, setRole] = useState<PortalRole>('admin')
-  const [phone, setPhone] = useState('+966512345678')
   const [email, setEmail] = useState('admin@ksu.edu.sa')
   const [otp, setOtp] = useState('')
   const [step, setStep] = useState<Step>('login')
-  const [message, setMessage] = useState('Secure internal portal mock. Use OTP 123456 for this preview.')
+  const [message, setMessage] = useState('Secure internal portal. Staff login uses one-time OTP by email.')
   const [spaces, setSpaces] = useState(initialSpaces)
   const [bookings, setBookings] = useState(initialBookings)
   const [selectedBookingId, setSelectedBookingId] = useState(initialBookings[0].id)
@@ -73,18 +71,32 @@ export default function AdminPortal() {
     { label: 'Refund review', value: bookings.filter((item) => item.payment === 'refund_review').length, tone: 'bg-rose-100 text-rose-800' },
   ], [bookings, spaces])
 
-  const start = (event: FormEvent<HTMLFormElement>) => {
+  const start = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!phonePattern.test(phone)) return setMessage('Use Saudi phone format: +9665XXXXXXXX')
+    if (!emailPattern.test(email)) return setMessage('Enter a valid staff email address.')
     if (role === 'ksu_admin' && !ksuEmailPattern.test(email)) return setMessage('KSU Admin requires an @ksu.edu.sa email.')
-    setStep('otp')
-    setMessage('OTP sent in preview mode. Use 123456.')
+    try {
+      const response = await fetch('/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role }) })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Unable to send OTP.')
+      setStep('otp')
+      setMessage(`OTP sent to ${email}. Code expires in 10 minutes.`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Email OTP backend is unavailable. Configure SMTP + backend runtime.')
+    }
   }
 
-  const verify = () => {
-    if (otp !== MOCK_OTP) return setMessage('Wrong OTP. Preview code is 123456.')
-    setStep('inside')
-    setMessage(`Signed in to ${selectedRole.label}. Booking management workspace ready.`)
+  const verify = async () => {
+    try {
+      const response = await fetch('/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role, code: otp }) })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Wrong OTP.')
+      setRole(result.role || role)
+      setStep('inside')
+      setMessage(`Signed in to ${roles.find((item) => item.id === (result.role || role))?.label ?? selectedRole.label}. Workspace ready.`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to verify OTP.')
+    }
   }
 
   const updateSpace = (id: string, status: SpaceStatus) => {
@@ -148,9 +160,8 @@ export default function AdminPortal() {
             <h2 className="mt-3 text-3xl font-black">تسجيل دخول الإدارة</h2>
             <p className="mt-2 font-english text-sm font-bold text-wayyak-deep/45" dir="ltr">Selected: {selectedRole.label} · {selectedRole.note}</p>
             <form onSubmit={start} className="mt-6 grid gap-4">
-              <label className="text-sm font-bold">رقم الجوال<input value={phone} onChange={(event) => setPhone(event.target.value)} className="mt-2 w-full rounded-2xl border border-wayyak-green/10 bg-wayyak-sand p-4 font-english" dir="ltr" /></label>
               <label className="text-sm font-bold">البريد الإداري<input value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-2xl border border-wayyak-green/10 bg-wayyak-sand p-4 font-english" dir="ltr" /></label>
-              {step === 'otp' ? <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><input value={otp} onChange={(event) => setOtp(event.target.value)} placeholder="123456" className="rounded-2xl border border-wayyak-green/10 bg-wayyak-sand p-4 text-center font-english" dir="ltr" /><button type="button" onClick={verify} className="rounded-2xl bg-wayyak-gold px-7 py-4 font-black text-wayyak-deep">Verify</button></div> : <button className="rounded-2xl bg-wayyak-green px-7 py-4 font-black text-white">Send Admin OTP</button>}
+              {step === 'otp' ? <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><input value={otp} onChange={(event) => setOtp(event.target.value)} placeholder="6-digit OTP" className="rounded-2xl border border-wayyak-green/10 bg-wayyak-sand p-4 text-center font-english" dir="ltr" /><button type="button" onClick={verify} className="rounded-2xl bg-wayyak-gold px-7 py-4 font-black text-wayyak-deep">Verify</button></div> : <button className="rounded-2xl bg-wayyak-green px-7 py-4 font-black text-white">Send Email OTP</button>}
             </form>
             <p className="mt-6 rounded-2xl bg-wayyak-mint p-4 text-sm font-bold text-wayyak-green">{message}</p>
           </section>
