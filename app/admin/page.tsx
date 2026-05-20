@@ -51,6 +51,12 @@ const statusLabel: Record<SpaceStatus, string> = { awaiting_approval: 'Awaiting 
 const paymentLabel: Record<PaymentStatus, string> = { paid: 'Paid', manual_pending: 'Manual pending', refund_review: 'Refund review' }
 const bookingLabel: Record<BookingStatus, string> = { new: 'New', confirmed: 'Confirmed', checked_in: 'Checked in', completed: 'Completed', cancelled: 'Cancelled' }
 
+async function readJson(response: Response) {
+  const text = await response.text()
+  if (!text) return {}
+  try { return JSON.parse(text) } catch { return { error: 'OTP service needs backend runtime. This SFTP preview is static only.' } }
+}
+
 export default function AdminPortal() {
   const [role, setRole] = useState<PortalRole>('admin')
   const [email, setEmail] = useState('admin@ksu.edu.sa')
@@ -77,7 +83,7 @@ export default function AdminPortal() {
     if (role === 'ksu_admin' && !ksuEmailPattern.test(email)) return setMessage('KSU Admin requires an @ksu.edu.sa email.')
     try {
       const response = await fetch('/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role }) })
-      const result = await response.json()
+      const result = await readJson(response)
       if (!response.ok) throw new Error(result.error || 'Unable to send OTP.')
       setStep('otp')
       setMessage(`OTP sent to ${email}. Code expires in 10 minutes.`)
@@ -89,7 +95,7 @@ export default function AdminPortal() {
   const verify = async () => {
     try {
       const response = await fetch('/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role, code: otp }) })
-      const result = await response.json()
+      const result = await readJson(response)
       if (!response.ok) throw new Error(result.error || 'Wrong OTP.')
       setRole(result.role || role)
       setStep('inside')

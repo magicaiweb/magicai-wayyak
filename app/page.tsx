@@ -60,6 +60,12 @@ const emptyForm: SpaceForm = { category: 'boardroom', type: 'boardroom', titleAr
 const formatSar = (halalas: number) => `${(halalas / 100).toLocaleString('en-US')} SAR`
 const statusLabel: Record<SpaceStatus, string> = { draft: 'مسودة', pending: 'بانتظار الموافقة', approved: 'معتمد', rejected: 'مرفوض' }
 
+async function readJson(response: Response) {
+  const text = await response.text()
+  if (!text) return {}
+  try { return JSON.parse(text) } catch { return { error: 'خدمة OTP تحتاج backend runtime. المعاينة الحالية static فقط.' } }
+}
+
 const Logo = () => <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="h-11 w-11 shrink-0" aria-label="WAYYAK logo"><rect x="10" y="18" width="80" height="64" rx="18" fill="#1B6B3A" /><path d="M29 36h42M29 51h42M29 66h24" stroke="#fff" strokeWidth="7" strokeLinecap="round" /><circle cx="72" cy="66" r="7" fill="#F5A623" /></svg>
 
 export default function Home() {
@@ -113,7 +119,7 @@ export default function Home() {
     if (!emailPattern.test(email)) return setAuthError('أدخل بريد إلكتروني صحيح لاستلام OTP')
     try {
       const response = await fetch('/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role: 'seeker' }) })
-      const result = await response.json()
+      const result = await readJson(response)
       if (!response.ok) throw new Error(result.error || 'تعذر إرسال OTP')
       setRole('seeker'); setAuthStep('otp'); setMessage('تم إرسال OTP إلى بريدك الإلكتروني. الكود صالح لمدة 10 دقائق.')
     } catch (error) {
@@ -124,7 +130,7 @@ export default function Home() {
     setAuthError('')
     try {
       const response = await fetch('/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role: 'seeker', code: otp }) })
-      const result = await response.json()
+      const result = await readJson(response)
       if (!response.ok) throw new Error(result.error || 'OTP غير صحيح')
       setRole(result.role || 'seeker'); setAuthStep('signed_in'); setMessage('تم الدخول بالبريد. يمكنك الآن إرسال طلب حجز.')
     } catch (error) {
