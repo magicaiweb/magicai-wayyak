@@ -9,6 +9,8 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 10 })
 const port = Number(process.env.PORT || 3020)
 const ttlMinutes = 10
 const maxAttempts = 5
+const isProduction = process.env.NODE_ENV === 'production'
+const allowDevOtp = !isProduction && process.env.ALLOW_DEV_OTP !== 'false'
 
 const roles = new Set(['seeker', 'owner', 'admin', 'ksu_admin'])
 const staffRoles = new Set(['owner', 'admin', 'ksu_admin'])
@@ -41,9 +43,17 @@ async function sendOtpEmail(email, code) {
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
   const from = process.env.OTP_FROM_EMAIL || user
-  if (!host || !from) throw new Error('SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, OTP_FROM_EMAIL.')
+  const hasSmtp = Boolean(host && from)
+  if (!hasSmtp) {
+    if (allowDevOtp) {
+      console.log(`[WAYYAK DEV OTP] ${email}: ${code}`)
+      return { delivered: false, devOtp: code }
+    }
+    throw new Error('SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, OTP_FROM_EMAIL.')
+  }
   const transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: user && pass ? { user, pass } : undefined })
   await transporter.sendMail({ from, to: email, subject: 'Your WAYYAK login code', text: `Your WAYYAK one-time login code is ${code}. It expires in ${ttlMinutes} minutes.` })
+  return { delivered: true }
 }
 
 async function parseBody(req) {
@@ -64,8 +74,8 @@ async function requestOtp(body) {
   }
   const code = crypto.randomInt(100000, 999999).toString()
   await pool.query(`INSERT INTO email_otp_codes (email, role, code_hash, purpose, expires_at) VALUES ($1, $2, $3, $4, now() + ($5 || ' minutes')::interval)`, [email, role, codeHash(code, email), user.rows[0] ? 'login' : 'signup', ttlMinutes])
-  await sendOtpEmail(email, code)
-  return { ok: true, expiresInMinutes: ttlMinutes }
+  const delivery = await sendOtpEmail(email, code)
+  return { ok: true, expiresInMinutes: ttlMinutes, ...(delivery.devOtp ? { devOtp: delivery.devOtp } : {}) }
 }
 
 async function verifyOtp(body) {

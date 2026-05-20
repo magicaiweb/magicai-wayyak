@@ -50,6 +50,8 @@ const initialBookings: Booking[] = [
 const statusLabel: Record<SpaceStatus, string> = { awaiting_approval: 'Awaiting approval', approved: 'Approved', changes_requested: 'Changes requested' }
 const paymentLabel: Record<PaymentStatus, string> = { paid: 'Paid', manual_pending: 'Manual pending', refund_review: 'Refund review' }
 const bookingLabel: Record<BookingStatus, string> = { new: 'New', confirmed: 'Confirmed', checked_in: 'Checked in', completed: 'Completed', cancelled: 'Cancelled' }
+const DEMO_OTP = '246810'
+const isDemoPreview = () => typeof window !== 'undefined' && ['localhost', '127.0.0.1', 'demo.magicaiweb.com'].includes(window.location.hostname)
 
 async function readJson(response: Response) {
   const staticPreviewError = 'OTP service needs backend runtime. This SFTP preview is static only.'
@@ -64,6 +66,7 @@ export default function AdminPortal() {
   const [otp, setOtp] = useState('')
   const [step, setStep] = useState<Step>('login')
   const [message, setMessage] = useState('Secure internal portal. Staff login uses one-time OTP by email.')
+  const [demoOtp, setDemoOtp] = useState('')
   const [spaces, setSpaces] = useState(initialSpaces)
   const [bookings, setBookings] = useState(initialBookings)
   const [selectedBookingId, setSelectedBookingId] = useState(initialBookings[0].id)
@@ -86,14 +89,22 @@ export default function AdminPortal() {
       const response = await fetch('/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role }) })
       const result = await readJson(response)
       if (!response.ok) throw new Error(result.error || 'Unable to send OTP.')
+      setDemoOtp(result.devOtp || '')
       setStep('otp')
-      setMessage(`OTP sent to ${email}. Code expires in 10 minutes.`)
+      setMessage(result.devOtp ? `Preview mode: demo OTP is ${result.devOtp}.` : `OTP sent to ${email}. Code expires in 10 minutes.`)
     } catch (error) {
+      if (isDemoPreview()) {
+        setDemoOtp(DEMO_OTP); setStep('otp'); setMessage(`Preview mode without SMTP: demo OTP is ${DEMO_OTP}.`); return
+      }
       setMessage(error instanceof Error ? error.message : 'Email OTP backend is unavailable. Configure SMTP + backend runtime.')
     }
   }
 
   const verify = async () => {
+    if (demoOtp && isDemoPreview()) {
+      if (otp !== demoOtp) return setMessage('Wrong OTP.')
+      setStep('inside'); setMessage(`Signed in to ${selectedRole.label} in preview mode. Production remains email-only.`); return
+    }
     try {
       const response = await fetch('/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role, code: otp }) })
       const result = await readJson(response)
@@ -149,7 +160,7 @@ export default function AdminPortal() {
           </div>
           <div className="flex flex-wrap items-center gap-2" dir="ltr">
             {step === 'inside' ? roles.map((item) => <button key={item.id} type="button" onClick={() => { setRole(item.id); setMessage(`Showing ${item.label} only.`) }} className={`rounded-full px-3 py-2 font-english text-xs font-black transition ${role === item.id ? 'bg-wayyak-gold text-[#07130D]' : 'bg-white/10 text-white/60 hover:bg-white/20'}`}>{item.label}</button>) : null}
-            {step === 'inside' ? <button type="button" onClick={() => { setStep('login'); setOtp(''); setMessage('Signed out.') }} className="rounded-full bg-white/10 px-4 py-2 font-english text-xs font-black text-white">Sign out</button> : null}
+            {step === 'inside' ? <button type="button" onClick={() => { setStep('login'); setOtp(''); setDemoOtp(''); setMessage('Signed out.') }} className="rounded-full bg-white/10 px-4 py-2 font-english text-xs font-black text-white">Sign out</button> : null}
             <a href="../" className="rounded-full border border-white/15 px-4 py-2 font-english text-xs font-black uppercase tracking-[0.18em] text-white/70">User Site</a>
           </div>
         </nav>

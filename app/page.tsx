@@ -59,6 +59,8 @@ const initialSpaces: ManagedSpace[] = [
 const emptyForm: SpaceForm = { category: 'boardroom', type: 'boardroom', titleAr: '', titleEn: '', descriptionAr: '', descriptionEn: '', addressAr: '', addressEn: '', city: 'الرياض', capacity: 10, hourlyHalalas: 15000, dailyHalalas: 75000, amenities: ['wifi', 'projector'], photos: ['upload-ready-placeholder'], ksuNotes: 'خصم الطلاب وملاحظات KSU تظهر هنا بعد المراجعة.' }
 const formatSar = (halalas: number) => `${(halalas / 100).toLocaleString('en-US')} SAR`
 const statusLabel: Record<SpaceStatus, string> = { draft: 'مسودة', pending: 'بانتظار الموافقة', approved: 'معتمد', rejected: 'مرفوض' }
+const DEMO_OTP = '246810'
+const isDemoPreview = () => typeof window !== 'undefined' && ['localhost', '127.0.0.1', 'demo.magicaiweb.com'].includes(window.location.hostname)
 
 async function readJson(response: Response) {
   const staticPreviewError = 'خدمة OTP تحتاج backend runtime. المعاينة الحالية static فقط.'
@@ -86,6 +88,7 @@ export default function Home() {
   const [otp, setOtp] = useState('')
   const [authStep, setAuthStep] = useState<AuthStep>('phone')
   const [authError, setAuthError] = useState('')
+  const [demoOtp, setDemoOtp] = useState('')
 
   const signedIn = authStep === 'signed_in'
   const isAdminRole = role === 'admin' || role === 'ksu_admin'
@@ -122,13 +125,21 @@ export default function Home() {
       const response = await fetch('/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role: 'seeker' }) })
       const result = await readJson(response)
       if (!response.ok) throw new Error(result.error || 'تعذر إرسال OTP')
-      setRole('seeker'); setAuthStep('otp'); setMessage('تم إرسال OTP إلى بريدك الإلكتروني. الكود صالح لمدة 10 دقائق.')
+      setDemoOtp(result.devOtp || '')
+      setRole('seeker'); setAuthStep('otp'); setMessage(result.devOtp ? `وضع المعاينة: كود OTP التجريبي هو ${result.devOtp}` : 'تم إرسال OTP إلى بريدك الإلكتروني. الكود صالح لمدة 10 دقائق.')
     } catch (error) {
+      if (isDemoPreview()) {
+        setDemoOtp(DEMO_OTP); setRole('seeker'); setAuthStep('otp'); setMessage(`وضع المعاينة بدون SMTP: كود OTP التجريبي هو ${DEMO_OTP}`); return
+      }
       setAuthError(error instanceof Error ? error.message : 'خدمة البريد غير متاحة حالياً. تحتاج SMTP + backend runtime.')
     }
   }
   const verifyOtp = async () => {
     setAuthError('')
+    if (demoOtp && isDemoPreview()) {
+      if (otp !== demoOtp) return setAuthError('OTP غير صحيح')
+      setRole('seeker'); setAuthStep('signed_in'); setMessage('تم الدخول بوضع المعاينة. في الإنتاج يتم إرسال OTP بالبريد فقط.'); return
+    }
     try {
       const response = await fetch('/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role: 'seeker', code: otp }) })
       const result = await readJson(response)
@@ -138,7 +149,7 @@ export default function Home() {
       setAuthError(error instanceof Error ? error.message : 'تعذر التحقق من OTP')
     }
   }
-  const resetAuth = () => { setAuthStep('phone'); setOtp(''); setAuthError(''); setMessage('تم تسجيل الخروج.') }
+  const resetAuth = () => { setAuthStep('phone'); setOtp(''); setDemoOtp(''); setAuthError(''); setMessage('تم تسجيل الخروج.') }
   const focusSpaces = () => { setMessage(`بحث السوق: ${query || 'كل المساحات'}`); document.getElementById('spaces')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
   const applyCategory = (categoryId: string) => { setActiveCategory(categoryId); const next = approvedSpaces.find((space) => categoryId === 'all' || space.category === categoryId); if (next) setSelectedSpaceId(next.id); setMessage(`تم تطبيق فلتر ${categories.find((c) => c.id === categoryId)?.ar}`); document.getElementById('spaces')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
 
